@@ -46,7 +46,7 @@ const Stage = () => {
               <Button 
                 onClick={handleStartGame}
                 className={`!min-w-[120px] !h-[45px] transition-all duration-300
-                  ${canStartGame ? 'animate-pulse !bg-green-500 !border-green-400' : 'opacity-50 cursor-not-allowed'}
+                  ${canStartGame ? 'animate-pulse' : 'opacity-50 cursor-not-allowed'}
                 `}
                 disabled={!canStartGame || gameStarted}
               >
@@ -59,20 +59,11 @@ const Stage = () => {
                   setIsRoundCompleted(false);
                 }}
                 className={`!min-w-[120px] !h-[45px] transition-all duration-300
-                  ${isRoundCompleted ? 'animate-pulse !bg-green-500 !border-green-400' : 'opacity-50 cursor-not-allowed'}
+                  ${isRoundCompleted ? 'animate-pulse' : 'opacity-50 cursor-not-allowed'}
                 `}
                 disabled={!isRoundCompleted}
               >
                 Next Round
-              </Button>
-              <Button 
-                onClick={() => {
-                  console.log("📊 Clicking Get State button");
-                  getGameState();
-                }}
-                className="!min-w-[120px] !h-[45px]"
-              >
-                Get State
               </Button>
             </div>
           </div>
@@ -86,7 +77,7 @@ const Stage = () => {
       <style jsx global>{`
         @keyframes pulse-border {
           0% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            box-shadow: 0 0 0 0 rgba(204, 248, 220, 0.7);
           }
           70% {
             box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);

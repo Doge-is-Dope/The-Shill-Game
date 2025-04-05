@@ -13,12 +13,40 @@ interface Message {
   [key: string]: any;
 }
 
+interface GameState {
+  status: string;
+  round: number;
+  round_phase: string;
+  active_players: Array<{
+    name: string;
+    traits: Record<string, string>;
+    memecoin: string;
+  }>;
+  eliminated_players: Array<{
+    name: string;
+    traits: Record<string, string>;
+    memecoin: string;
+  }>;
+}
+
+interface Winner {
+  name: string;
+  memecoin: string;
+  takeaway: string;
+}
+
+interface WinnerResponse {
+  status: string;
+  winners: Winner[];
+}
+
 interface WebSocketContextType {
   isConnected: boolean;
   messages: Message[];
   startGame: () => Promise<void>;
   nextRound: () => Promise<void>;
-  getGameState: () => Promise<void>;
+  getGameState: () => Promise<GameState | null>;
+  getWinner: () => Promise<WinnerResponse | null>;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -91,8 +119,22 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(`${API_URL}/game/state`);
       const data = await response.json();
       console.log("📊 Game state:", data);
+      return data;
     } catch (error) {
       console.error("❌ Error fetching game state:", error);
+      return null;
+    }
+  };
+
+  const getWinner = async () => {
+    try {
+      const response = await fetch(`${API_URL}/game/winner`);
+      const data = await response.json();
+      console.log("🏆 Winner result:", data);
+      return data;
+    } catch (error) {
+      console.error("❌ Error fetching winner:", error);
+      return null;
     }
   };
 
@@ -103,6 +145,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       startGame,
       nextRound,
       getGameState,
+      getWinner,
     }}>
       {children}
     </WebSocketContext.Provider>

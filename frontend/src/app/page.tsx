@@ -26,6 +26,42 @@ export default function Home() {
     }
   });
 
+  // 获取 tokenID
+  const { data: tokenId } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'tokenOfOwnerByIndex',
+    args: address ? [address, BigInt(0)] : undefined,
+    query: {
+      enabled: !!address && !!balance && Number(balance) > 0
+    }
+  });
+
+  // 获取 tokenURI
+  const { data: tokenURI } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'tokenURI',
+    args: tokenId ? [tokenId] : undefined,
+    query: {
+      enabled: !!tokenId
+    }
+  });
+
+  // 解码 base64 数据
+  useEffect(() => {
+    if (tokenURI && typeof tokenURI === 'string') {
+      // 移除 "data:application/json;base64," 前缀
+      const base64Data = tokenURI.replace("data:application/json;base64,", "");
+      try {
+        const decodedData = atob(base64Data);
+        console.log("Decoded NFT data:", decodedData);
+      } catch (error) {
+        console.error("Error decoding base64 data:", error);
+      }
+    }
+  }, [tokenURI]);
+
   useEffect(() => {
     if (balance && typeof balance === 'bigint' && balance > 0) {
       setHasNFT(true);
