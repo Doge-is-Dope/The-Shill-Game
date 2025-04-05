@@ -1,27 +1,54 @@
 "use client";
 
 import { Button } from "pixel-retroui";
-import { useAccount, useConfig } from "wagmi";
+import { useAccount, useConfig, useWriteContract, useReadContract } from "wagmi";
 import { switchChain } from "@wagmi/core";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import Header from "./_component/header";
 import Stage from "./_component/stage";
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/config/abi/NFT";
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const config = useConfig();
   const { openConnectModal } = useConnectModal();
-  // mock NFT mint status
+  const { writeContractAsync } = useWriteContract();
   const [hasNFT, setHasNFT] = useState(false);
+
+  const { data: balance } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address
+    }
+  });
+
+  useEffect(() => {
+    if (balance && typeof balance === 'bigint' && balance > 0) {
+      setHasNFT(true);
+    }
+  }, [balance]);
 
   const handleMint = async () => {
     try {
-      // mock mint success
+      const hash = await writeContractAsync({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'mint',
+      });
+      
+      console.log('Mint transaction hash:', hash);
       setHasNFT(true);
-      console.log('Minted NFT successfully (simulated)');
     } catch (error) {
       console.error("Mint failed:", error);
+      if (error instanceof Error) {
+        console.error(`Mint failed: ${error.message}`);
+      } else {
+        console.error('Mint failed: Unknown error');
+      }
     }
   };
 
@@ -45,7 +72,7 @@ export default function Home() {
 
   if (!isConnected) {
     return (
-      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <div className="bg-[#112a41] grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
         <main className="flex flex-col justify-center gap-[32px] row-start-2 items-center">
           <Button onClick={() => connectWallet()}>Connect Wallet</Button>
         </main>
@@ -55,13 +82,13 @@ export default function Home() {
 
   if (!hasNFT) {
     return (
-      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <div className="bg-[#112a41] grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
         <main className="flex flex-col justify-center gap-[32px] row-start-2 items-center">
           <Header />
           <div className="mt-4 text-center">
             <div className="flex flex-col items-center gap-2">
               <p className="text-yellow-500">You don&apos;t have Shill Game NFT</p>
-              <Button onClick={handleMint}>Get NFT (Test Mode)</Button>
+              <Button onClick={handleMint}>Get NFT</Button>
             </div>
           </div>
         </main>

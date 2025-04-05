@@ -16,6 +16,7 @@
     "pixel-retroui": "^2.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-sprite-animator": "^2.0.2",
     "viem": "2.x",
     "wagmi": "^2.14.16"
   },

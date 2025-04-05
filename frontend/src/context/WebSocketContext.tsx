@@ -1,10 +1,21 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+
+interface Message {
+  type: string;
+  players?: Array<{
+    id: string;
+    position: number;
+  }>;
+  status?: 'waiting' | 'started' | 'ended';
+  currentRound?: number;
+  [key: string]: any;
+}
 
 interface WebSocketContextType {
   isConnected: boolean;
-  messages: any[];
+  messages: Message[];
   startGame: () => Promise<void>;
   nextRound: () => Promise<void>;
   getGameState: () => Promise<void>;
@@ -16,59 +27,38 @@ const WS_URL = 'ws://54.252.233.89:8000/ws';
 const API_URL = 'http://54.252.233.89:8000';
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const socket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_DELAY = 5000;
 
-  const connect = () => {
-    if (socket?.readyState === WebSocket.OPEN) return;
+  useEffect(() => {
+    // 连接 WebSocket
+    socket.current = new WebSocket(WS_URL);
 
-    const ws = new WebSocket(WS_URL);
-
-    ws.onopen = () => {
-      console.log("✅ Connected to WebSocket");
+    socket.current.onopen = () => {
+      console.log('WebSocket Connected');
       setIsConnected(true);
       setReconnectAttempts(0);
     };
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("Received message:", data);
-        setMessages(prev => [...prev, data]);
-      } catch (e) {
-        console.log("📩 Raw message:", event.data);
-      }
-    };
-
-    ws.onclose = () => {
-      console.log("🔌 Disconnected from WebSocket");
-      setIsConnected(false);
-      setSocket(null);
-
-      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        setTimeout(() => {
-          setReconnectAttempts(prev => prev + 1);
-          connect();
-        }, RECONNECT_DELAY);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error("⚠️ WebSocket error:", error);
+    socket.current.onclose = () => {
+      console.log('WebSocket Disconnected');
       setIsConnected(false);
     };
 
-    setSocket(ws);
-  };
+    socket.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Received message:', data);
+      setMessages(prev => [...prev, data]);
+    };
 
-  useEffect(() => {
-    connect();
     return () => {
-      socket?.close();
+      if (socket.current) {
+        socket.current.close();
+      }
     };
   }, []);
 

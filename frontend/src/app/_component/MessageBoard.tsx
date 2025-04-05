@@ -5,7 +5,7 @@ import { useWebSocket } from '@/context/WebSocketContext';
 import { useEffect, useRef } from 'react';
 
 interface Message {
-  type: 'agent' | 'system';
+  type: string;
   sender?: string;
   response?: string;
   thought?: string;
@@ -41,6 +41,13 @@ const MessageBoard = () => {
     if (logRef.current) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
+    
+    // Log system messages to console
+    messages.forEach(message => {
+      if (message.type === 'system') {
+        console.log('System Message:', message.content);
+      }
+    });
   }, [messages]);
 
   const getTheme = (sender?: string) => {
@@ -50,42 +57,26 @@ const MessageBoard = () => {
   };
 
   const renderMessage = (message: Message) => {
-    const theme = getTheme(message.type === 'system' ? 'System' : message.sender);
-
-    if (message.type === 'agent') {
-      return (
-        <div className={`mb-3 bg-[#16213e] rounded-lg p-3 border-l-4 ${theme.border} ${theme.highlight}`}>
-          <div className="message">
-            <span className={`font-bold ${theme.text}`}>{message.sender}:</span>
-            <span className="text-gray-200 ml-2">{message.response}</span>
-          </div>
-          {message.thought && (
-            <div className={`thought mt-2 p-2 ${theme.bg} rounded-md border border-green-500/30 text-gray-400 text-sm`}>
-              💭 {message.thought}
-            </div>
-          )}
-        </div>
-      );
-    } else if (message.type === 'system') {
-      const isHostMessage = message.content?.startsWith('Host:');
-      const displayContent = isHostMessage ? message.content : message.content;
-      const messageTheme = isHostMessage ? roleThemes.Host : theme;
-
-      return (
-        <div className={`mb-3 bg-[#16213e] rounded-lg p-3 border-l-4 ${messageTheme.border} ${messageTheme.highlight}`}>
-          <div className="message">
-            {isHostMessage ? (
-              <div className={`${messageTheme.text} font-pixel`}>{displayContent}</div>
-            ) : (
-              <>
-                <span className={`font-bold ${messageTheme.text}`}>System:</span>
-                <span className="text-gray-200 ml-2">{displayContent}</span>
-              </>
-            )}
-          </div>
-        </div>
-      );
+    // Skip rendering system messages
+    if (message.type === 'system') {
+      return null;
     }
+
+    const theme = getTheme(message.sender);
+
+    return (
+      <div className={`mb-3 bg-[#16213e] rounded-lg p-3 border-l-4 ${theme.border} ${theme.highlight}`}>
+        <div className="message">
+          <span className={`font-bold ${theme.text}`}>{message.sender}:</span>
+          <span className="text-gray-200 ml-2">{message.response}</span>
+        </div>
+        {message.thought && (
+          <div className={`thought mt-2 p-2 ${theme.bg} rounded-md border border-green-500/30 text-gray-400 text-sm`}>
+            💭 {message.thought}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
